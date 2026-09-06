@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb0d411a32009fc4e81801ad9c3bbb51, type: 3}
+  m_Name: ImpactEffectLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::KillOrDead.Combat.ImpactEffectLibrary
+  entries:
+  - surfaceType: 0
+    impactPrefab: {fileID: 100006, guid: 94a130fb17f1cae4388a8fe1d8bd3055, type: 3}
+  - surfaceType: 1
+    impactPrefab: {fileID: 100002, guid: 627bfa08ce624ab40ab2fea71785b5f0, type: 3}
+  - surfaceType: 2
+    impactPrefab: {fileID: 100002, guid: 053ffbc5e89111349bb060a39ffa0f37, type: 3}
+  - surfaceType: 3
+    impactPrefab: {fileID: 100002, guid: 2f9348d6583cde14eb0d82bb9732647e, type: 3}
+  - surfaceType: 4
+    impactPrefab: {fileID: 100002, guid: 0b24f31f464fa614a84acdeac974ed6b, type: 3}
+  - surfaceType: 5
+    impactPrefab: {fileID: 100002, guid: 957385c45b877e645a128e11a3efb2f9, type: 3}
+  fallbackPrefab: {fileID: 100006, guid: 94a130fb17f1cae4388a8fe1d8bd3055, type: 3}

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 082978dd3f6f3574e88c9eba019daeb9, type: 3}
+  m_Name: ForwardGrip_C
+  m_EditorClassIdentifier: Assembly-CSharp::KillOrDead.Attachments.AttachmentDefinition
+  slotType: 2
+  displayName: Forward Grip C
+  icon: {fileID: 0}
+  prefab: {fileID: 5260930423158259155, guid: 1697ae8a9c3dbbe40baff038f186ebab, type: 3}
+  isSuppressor: 0
+  bodyMaterialOverride: {fileID: 2100000, guid: cc777cc762cfe5b43ac98972dca90172, type: 2}
+  bodyMaterialName: Low Poly Weapon
+  lensMaterialOverride: {fileID: 2100000, guid: cac6d9e9a257b9c4ba78f33872d27f5d, type: 2}
+  lensMaterialName: Low Poly Lens
+  scaleMultiplier: 1
+  localPositionOffset: {x: 0, y: 0, z: 0}
+  localEulerOffset: {x: 0, y: 0, z: 0}
+  providesAimPoint: 0
+  aimPointChildName: 
+  aimPointLocalOffset: {x: 0, y: 0, z: 0}
+  aimFovOverride: 0
+  showReticleDot: 1
+  reticleDotSize: 0.003
+  reticleDotColor: {r: 1, g: 0.09, b: 0.05, a: 1}
+  function: 0
+  deviceOnByDefault: 0
+  deviceEmitterOffset: {x: 0, y: 0, z: 0}
+  laserColor: {r: 1, g: 0.06, b: 0.04, a: 1}
+  laserMaxDistance: 100
+  laserBeamWidth: 0.0035
+  laserDotSize: 0.016
+  lightColor: {r: 1, g: 0.96, b: 0.88, a: 1}
+  lightIntensity: 18
+  lightRange: 35
+  lightSpotAngle: 34
+  verticalRecoilMultiplier: 0.94
+  horizontalRecoilMultiplier: 0.82

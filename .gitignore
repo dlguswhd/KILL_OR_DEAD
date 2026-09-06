@@ -1,0 +1,78 @@
+# ============================================
+# Unity — 자동 생성 폴더 (절대 올리지 말 것)
+# ============================================
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Asset Store 도구가 만드는 폴더
+/[Aa]ssets/AssetStoreTools*
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# ============================================
+# Visual Studio / Rider / VS Code — 자동 생성
+# ============================================
+.vs/
+.vscode/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# ============================================
+# 빌드 결과물
+# ============================================
+*.apk
+*.aab
+*.unitypackage
+*.app
+ExportedObj/
+.consulo/
+crashlytics-build.properties
+
+# ============================================
+# 압축 파일 — 이미 임포트했으면 저장소에 넣을 이유가 없다
+# (shooting-range.zip 등 합쳐서 190MB 가까이 됨)
+# ============================================
+/[Aa]ssets/**/*.zip
+/[Aa]ssets/**/*.rar
+/[Aa]ssets/**/*.7z
+/[Aa]ssets/**/*.zip.meta
+/[Aa]ssets/**/*.rar.meta
+/[Aa]ssets/**/*.7z.meta
+
+# ============================================
+# OS 자동 생성
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Unity 크래시 리포트
+# ============================================
+sysinfo.txt
+*.stackdump
+
+# ============================================
+# 이 프로젝트 개인 파일
+# ============================================
+.claude/
