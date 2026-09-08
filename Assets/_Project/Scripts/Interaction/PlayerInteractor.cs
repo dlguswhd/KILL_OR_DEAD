@@ -23,6 +23,9 @@ namespace KillOrDead.Interaction
         /// <summary>지금 조준선 안에 상호작용할 대상이 있는지. T키를 누가 가져갈지 정하는 데 쓰인다.</summary>
         public bool HasTarget => _current != null;
 
+        /// <summary>지금 조준선 안에 들어온 대상. 없으면 null. (문을 보고 있는지 판별하는 데 쓰인다)</summary>
+        public IInteractable Current => _current;
+
         private void Awake()
         {
             _camera = GetComponentInChildren<Camera>();
@@ -49,7 +52,8 @@ namespace KillOrDead.Interaction
             var rt = _promptText.rectTransform;
             rt.anchorMin = new Vector2(0.5f, 0.4f);
             rt.anchorMax = new Vector2(0.5f, 0.4f);
-            rt.sizeDelta = new Vector2(500, 60);
+            // 문 안내 문구("[F] 발로 차서 안쪽문 열기   (휠: 손으로 열기)")처럼 긴 글도 잘리지 않게 넉넉히 잡는다.
+            rt.sizeDelta = new Vector2(1100, 60);
             rt.anchoredPosition = Vector2.zero;
         }
 
@@ -66,18 +70,25 @@ namespace KillOrDead.Interaction
                 return;
             }
 
-            IInteractable found = FindInteractable();
+            _current = FindInteractable();
 
-            if (found != _current)
-            {
-                _current = found;
-                _promptText.text = _current != null ? $"[T] {_current.GetPrompt()}" : string.Empty;
-            }
+            // 문처럼 안내 문구가 실시간으로 바뀌는 물체가 있어서(휠로 여는 방식을 고르면 문구가 바뀐다)
+            // 대상이 바뀔 때만이 아니라 매 프레임 다시 읽는다.
+            _promptText.text = _current != null
+                ? $"[{KeyLabel(_current.InteractKey)}] {_current.GetPrompt()}"
+                : string.Empty;
 
-            if (_current != null && Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
+            if (_current != null && Keyboard.current != null
+                && Keyboard.current[_current.InteractKey].wasPressedThisFrame)
             {
                 _current.Interact(gameObject);
             }
+        }
+
+        /// <summary>화면에 보여줄 키 이름. Key.F → "F" 처럼 열거형 이름을 그대로 쓴다.</summary>
+        private static string KeyLabel(Key key)
+        {
+            return key.ToString();
         }
 
         /// <summary>
