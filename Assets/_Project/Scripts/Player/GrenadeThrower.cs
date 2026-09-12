@@ -1,3 +1,4 @@
+using System.Reflection;
 using KINEMATION.TacticalShooterPack.Scripts.Player;
 using KillOrDead.Combat;
 using KillOrDead.Interaction;
@@ -36,6 +37,32 @@ namespace KillOrDead.Player
         // 퀵드로우 포즈가 실제로 얼마나 적용되어 있는지(0~1). 클립의 커브가 굴리는 값이라
         // 불을 꺼도 곧바로 0이 되지 않고 벤더 전환 시간만큼 늦게 내려온다.
         private const string QuickDrawFloat = "PistolQuickDraw";
+
+        // TSP 플레이어는 재장전·외관 확인·탄창 확인 중인지 공개하지 않는다.
+        // 구매 에셋을 수정하지 않기 위해 기존 상태 필드를 읽기만 한다.
+        private static readonly FieldInfo HasActiveActionField = typeof(TacticalShooterPlayer)
+            .GetField("_hasActiveAction", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        private static readonly FieldInfo IsAimingField = typeof(TacticalShooterPlayer)
+            .GetField("_isAiming", BindingFlags.NonPublic | BindingFlags.Instance);
+
+        // 입력과 애니메이션 상태가 같은 프레임에 바뀌는 경우도 막기 위한 보조 검사 목록이다.
+        private static readonly int[] BlockingWeaponStateHashes =
+        {
+            Animator.StringToHash("Equip"),
+            Animator.StringToHash("Draw"),
+            Animator.StringToHash("Quick_Draw"),
+            Animator.StringToHash("Holster"),
+            Animator.StringToHash("Quick_Holster"),
+            Animator.StringToHash("Inspect"),
+            Animator.StringToHash("MagCheck"),
+            Animator.StringToHash("Reload_Empty"),
+            Animator.StringToHash("Reload_Tac"),
+            Animator.StringToHash("Reload_Start"),
+            Animator.StringToHash("Reload_Start_Empty"),
+            Animator.StringToHash("Reload_Loop"),
+            Animator.StringToHash("Reload_End")
+        };
 
         [Header("Input")]
         [SerializeField] private Key throwKey = Key.G;
@@ -118,6 +145,7 @@ namespace KillOrDead.Player
         private PlayerInteractor _interactor;
         private TacticalShooterPlayer _player;
         private Transform _handBone;
+        private InputAction _aimAction;
 
         private int _layerIndex = -1;
         private bool _aiming;
@@ -138,6 +166,9 @@ namespace KillOrDead.Player
         // 이번 던지기에서 퀵드로우 포즈를 썼는지. 복귀 타이밍을 소총에 맞출지 판단하는 데 쓴다.
         // (_restoreQuickDrawPose는 포즈를 끄는 순간 false가 되므로 따로 필요하다.)
         private bool _usedQuickDrawPose;
+        private bool _weaponInputsLocked;
+        private bool _restoreAimAction;
+        private bool _restoreAimActionWhenInputReturns;
 
         public bool InputEnabled { get; set; } = true;
 
@@ -161,6 +192,11 @@ namespace KillOrDead.Player
             _interactor = GetComponent<PlayerInteractor>();
             _player = GetComponent<TacticalShooterPlayer>();
 
+            if (_playerInput != null && _playerInput.actions != null)
+            {
+                _aimAction = _playerInput.actions.FindAction("Aim");
+            }
+
             if (_animator != null)
             {
                 foreach (var t in _animator.GetComponentsInChildren<Transform>(true))
@@ -181,6 +217,7 @@ namespace KillOrDead.Player
         {
             // 무기를 바꾸면 컨트롤러가 통째로 교체되므로 레이어 번호를 그때그때 다시 찾는다.
             _layerIndex = -1;
+            TryRestoreAimAction();
         }
 
         private void OnDisable()
@@ -188,10 +225,13 @@ namespace KillOrDead.Player
             // 도중에 꺼지면 자세와 총이 어중간한 상태로 남는다. 반드시 되돌린다.
             if (_aiming) CancelAiming();
             if (_throwing) FinishThrow();
+            UnlockWeaponInputs();
         }
 
         private void Update()
         {
+            TryRestoreAimAction();
+
             if (_animator == null) return;
 
             ResolveLayerIndex();
@@ -234,6 +274,10 @@ namespace KillOrDead.Player
             // 권총(X키)을 들고 있으면 오른손이 차 있어서 수류탄을 쥘 수 없다.
             if (blockWhilePistolDrawn && IsPistolDrawn()) return false;
 
+            // R/I/M 동작 또는 C 무기 교체가 진행 중이면 G가 해당 애니메이션을 끊지 못하게 한다.
+            // 수류탄이 이미 잠금을 건 뒤에는 자기 자신의 동작 상태를 장애물로 보지 않는다.
+            if (!_weaponInputsLocked && (IsWeaponActionActive() || IsWeaponChanging())) return false;
+
             return true;
         }
 
@@ -245,6 +289,8 @@ namespace KillOrDead.Player
         /// </summary>
         private void StartAiming()
         {
+            LockWeaponInputs();
+
             _aiming = true;
             _poseExited = false;
             _usedQuickDrawPose = false;
@@ -343,6 +389,8 @@ namespace KillOrDead.Player
                 Destroy(_heldGrenade);
                 _heldGrenade = null;
             }
+
+            UnlockWeaponInputs();
         }
 
         /// <summary>G 두 번째 — 실제로 던진다. 수류탄은 이미 손에 쥐고 있다.</summary>
@@ -446,6 +494,125 @@ namespace KillOrDead.Player
                 Destroy(_heldGrenade);
                 _heldGrenade = null;
             }
+
+            UnlockWeaponInputs();
+        }
+
+        /// <summary>
+        /// 수류탄을 손에 든 동안 총기 관련 입력을 잠근다.
+        /// TSP의 기존 동작 잠금을 재사용하므로 R/X/I/M/C와 마우스 왼쪽 클릭이 함께 막힌다.
+        /// </summary>
+        private void LockWeaponInputs()
+        {
+            if (_weaponInputsLocked) return;
+            _weaponInputsLocked = true;
+
+            if (_player != null)
+            {
+                // 조준 상태에서 G를 눌러도 확대 화면이 남지 않게 먼저 조준을 해제한다.
+                if (IsPlayerAiming()) _player.OnAim();
+
+                var weapon = _player.GetPrimaryWeapon();
+                if (weapon != null && weapon.IsFiring) weapon.StopFiring();
+
+                _player.OnActionStarted();
+            }
+
+            // TSP의 OnAim()에는 동작 잠금 검사가 없어서 Aim 액션만 직접 끈다.
+            if (_aimAction is { enabled: true })
+            {
+                _restoreAimAction = true;
+                _aimAction.Disable();
+            }
+        }
+
+        /// <summary>수류탄 동작이 끝난 뒤 잠갔던 총기 입력을 원래대로 되돌린다.</summary>
+        private void UnlockWeaponInputs()
+        {
+            if (!_weaponInputsLocked) return;
+            _weaponInputsLocked = false;
+
+            if (_player != null) _player.OnActionEnded();
+            TryRestoreAimAction();
+        }
+
+        private void TryRestoreAimAction()
+        {
+            if (_weaponInputsLocked) return;
+            if (!_restoreAimAction && !_restoreAimActionWhenInputReturns) return;
+            if (_aimAction == null)
+            {
+                _restoreAimAction = false;
+                _restoreAimActionWhenInputReturns = false;
+                return;
+            }
+
+            // 작업대처럼 PlayerInput 전체가 꺼진 동안에는 Aim만 홀로 켜지지 않게 기다린다.
+            if (_playerInput != null && !_playerInput.enabled)
+            {
+                _restoreAimActionWhenInputReturns = true;
+                return;
+            }
+
+            _aimAction.Enable();
+            _restoreAimAction = false;
+            _restoreAimActionWhenInputReturns = false;
+        }
+
+        private bool IsPlayerAiming()
+        {
+            return _player != null
+                   && IsAimingField != null
+                   && IsAimingField.GetValue(_player) is true;
+        }
+
+        private bool IsWeaponActionActive()
+        {
+            if (_player != null
+                && HasActiveActionField != null
+                && HasActiveActionField.GetValue(_player) is true)
+            {
+                return true;
+            }
+
+            return IsBlockingWeaponAnimationActive();
+        }
+
+        private bool IsWeaponChanging()
+        {
+            // C 입력 직후 Holster가 시작되어 실제 무기 교체가 예약된 구간을 놓치지 않는다.
+            return _player != null && _player.IsInvoking("ChangeWeapon");
+        }
+
+        private bool IsBlockingWeaponAnimationActive()
+        {
+            if (_animator == null || !_animator.isActiveAndEnabled) return false;
+
+            for (int layer = 0; layer < _animator.layerCount; layer++)
+            {
+                if (ContainsBlockingState(_animator.GetCurrentAnimatorStateInfo(layer).shortNameHash))
+                {
+                    return true;
+                }
+
+                if (_animator.IsInTransition(layer)
+                    && ContainsBlockingState(_animator.GetNextAnimatorStateInfo(layer).shortNameHash))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ContainsBlockingState(int stateHash)
+        {
+            foreach (int blockingHash in BlockingWeaponStateHashes)
+            {
+                if (stateHash == blockingHash) return true;
+            }
+
+            return false;
         }
 
         /// <summary>던지기 전, 수류탄을 손에 쥐여준다.</summary>

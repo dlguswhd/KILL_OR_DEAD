@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using KINEMATION.TacticalShooterPack.Scripts.Player;
 using KINEMATION.TacticalShooterPack.Scripts.Weapon;
+using KillOrDead.Player;
 using UnityEngine;
 
 namespace KillOrDead.Combat
@@ -34,6 +35,7 @@ namespace KillOrDead.Combat
 
         // 이 무기를 들고 있는 플레이어. "지금 손에 든 무기가 나인가"를 확인하는 데 쓴다.
         private TacticalShooterPlayer _ownerPlayer;
+        private GrenadeThrower _grenadeThrower;
 
         /// <summary>총 자체의 기본 조준점(아이언사이트).</summary>
         public Transform DefaultAimPoint
@@ -55,7 +57,24 @@ namespace KillOrDead.Combat
             if (_recoil == null) _recoil = GetComponent<WeaponRecoil>();
             if (_recoil != null) _recoil.Initialize(owner);
 
-            if (owner != null) _ownerPlayer = owner.GetComponent<TacticalShooterPlayer>();
+            if (owner != null)
+            {
+                _ownerPlayer = owner.GetComponent<TacticalShooterPlayer>();
+                _grenadeThrower = owner.GetComponent<GrenadeThrower>();
+            }
+        }
+
+        public override void StartFiring()
+        {
+            // TSP의 구형 입력 경로는 동작 잠금을 확인하지 않고 Mouse0으로 바로 격발한다.
+            // 모든 격발이 반드시 지나는 무기 단계에서 다시 막아 수류탄 자세 중 한 발도 새지 않게 한다.
+            if (_grenadeThrower != null && (_grenadeThrower.IsAiming || _grenadeThrower.IsThrowing))
+            {
+                StopFiring();
+                return;
+            }
+
+            base.StartFiring();
         }
 
         private void CacheDefaultAimPoint()
