@@ -134,6 +134,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1455423802687713497, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6762683989095773820}
+    - targetCorrespondingSourceObject: {fileID: 1455423802687713497, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3268255730221521242}
+    - targetCorrespondingSourceObject: {fileID: 1455423802687713497, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8880480607433200499}
+    - targetCorrespondingSourceObject: {fileID: 1455423802687713497, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4361804589723146024}
   m_SourcePrefab: {fileID: 100100000, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
 --- !u!1 &1131503542214682737 stripped
 GameObject:
@@ -328,3 +337,74 @@ MonoBehaviour:
   rollPerLeanDegree: 0.3
   maxRoll: 12
   invert: 0
+--- !u!114 &3268255730221521242
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1131503542214682737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474e365b4e4f73d409cdd64e9c102e50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KillOrDead.Player.PlayerDoorKick
+  impactNormalizedTime: 0.54
+  cooldown: 0.8
+  blendInTime: 0.08
+  blendOutTime: 0.18
+  kickTowardLook: 1
+  maxAimAngle: 55
+--- !u!114 &8880480607433200499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1131503542214682737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce93e093409acf34396acedf8cfa46e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KillOrDead.Player.DoorOpenModeSelector
+  defaultMode: 0
+  wheelThreshold: 0.1
+--- !u!114 &4361804589723146024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1131503542214682737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5071782e2ea204e46b2b65db0ee7af82, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KillOrDead.Player.PlayerWallClimb
+  climbKey: 22
+  detectDistance: 1.1
+  probeHeight: 1.15
+  maxFacingAngle: 55
+  minWallHeight: 1
+  maxWallHeight: 5
+  maxWallDepth: 2.5
+  blockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  standoffDistance: 0.3
+  hangDrop: 1.85
+  topDrop: 0.28
+  landingForward: 0.7
+  rootJumpThreshold: 0.4
+  minWarpWindow: 0.3
+  flatWarpRate: 3.5
+  climbSpeed: 1
+  climbRiseRate: 0.633
+  overStartTime: 2.12
+  overEndTime: 3.03
+  landTouchdownTime: 0.6
+  landEndTime: 2.1
+  blendInTime: 0.15
+  blendOutTime: 0.25
+  phaseBlendTime: 0.22
+  hideWeaponWhileClimbing: 1
