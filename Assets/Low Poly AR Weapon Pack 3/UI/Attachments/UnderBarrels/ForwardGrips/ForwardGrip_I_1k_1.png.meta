@@ -1,7 +1,17 @@
 fileFormatVersion: 2
 guid: d35d14a59c6066a48b318423536bd393
+AssetOrigin:
+  serializedVersion: 1
+  productId: 313750
+  packageName: Low Poly AR Weapon Pack 3
+  packageVersion: 1.0
+  assetPath: Assets/Low Poly AR Weapon Pack 3/UI/Attachments/UnderBarrels/ForwardGrips/ForwardGrip_I_1k_1.png
+  uploadId: 741608
 TextureImporter:
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      213: -4092692341949705003
+    second: ForwardGrip_I_1k_1_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -93,9 +103,44 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: ForwardGrip_I_1k_1_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1920
+        height: 1080
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5d4502fbff5d337c0800000000000000
+      internalID: -4092692341949705003
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -109,16 +154,10 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      ForwardGrip_I_1k_1_0: -4092692341949705003
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 313750
-  packageName: Low Poly AR Weapon Pack 3
-  packageVersion: 1.0
-  assetPath: Assets/Low Poly AR Weapon Pack 3/UI/Attachments/UnderBarrels/ForwardGrips/ForwardGrip_I_1k_1.png
-  uploadId: 741608

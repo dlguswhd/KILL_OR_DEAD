@@ -1,7 +1,17 @@
 fileFormatVersion: 2
 guid: defb129af198c0e438a970603e14fc81
+AssetOrigin:
+  serializedVersion: 1
+  productId: 322992
+  packageName: Low Poly Pistol Weapon Pack 3
+  packageVersion: 1.0
+  assetPath: Assets/Low Poly AR Weapon Pack 3/UI/Attachments/Optics/Optic_Pistol_C_1K_2.png
+  uploadId: 774705
 TextureImporter:
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      213: 2787280110108684906
+    second: Optic_Pistol_C_1K_2_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -93,9 +103,44 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: Optic_Pistol_C_1K_2_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 0
+        width: 1920
+        height: 1080
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a623a841e786ea620800000000000000
+      internalID: 2787280110108684906
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
@@ -109,16 +154,10 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      Optic_Pistol_C_1K_2_0: 2787280110108684906
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 322992
-  packageName: Low Poly Pistol Weapon Pack 3
-  packageVersion: 1.0
-  assetPath: Assets/Low Poly AR Weapon Pack 3/UI/Attachments/Optics/Optic_Pistol_C_1K_2.png
-  uploadId: 774705
