@@ -182,6 +182,7 @@ namespace KillOrDead.Player
             ResetState();
         }
 
+        // 누름 상태를 초기값으로 되돌린다.(관련 변수 초기화) 탭/홀드/취소로 판정이 끝났거나 강제 취소된 뒤 다음 입력을 새로 받을 수 있게 하기 위함.
         private void ResetState()
         {
             IsKeyHeld = false;
