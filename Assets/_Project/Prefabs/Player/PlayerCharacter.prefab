@@ -427,7 +427,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::KillOrDead.Player.PlayerTapHoldInput
   actionName: Interact
-  tapHoldBoundaryTime: 0.5
+  tapHoldBoundaryTime: 0.3
   holdRequiredTime: 1
   logEvents: 1
 --- !u!1 &4050675091768687230 stripped

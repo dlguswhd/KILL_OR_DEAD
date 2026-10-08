@@ -21,7 +21,7 @@ namespace KillOrDead.Player
 
         [Header("판정 시간")]
         [Tooltip("이 시간 미만 눌렀다 떼면 탭, 이상이면 홀드 판정 구간으로 본다. 플레이테스트 후 조정한다.")]
-        [SerializeField, Min(0.01f)] private float tapHoldBoundaryTime = 0.5f;
+        [SerializeField, Min(0.01f)] private float tapHoldBoundaryTime = 0.3f;
 
         [Tooltip("탭/홀드 경계를 통과한 뒤 추가로 이 시간을 채우면 홀드가 발동한다. 키를 떼지 않아도 되고, 동작별로 조절한다.")]
         [SerializeField, Min(0.01f)] private float holdRequiredTime = 1.0f;
