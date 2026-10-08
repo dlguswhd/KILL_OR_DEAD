@@ -37,6 +37,9 @@ namespace KillOrDead.Player
         private bool _inputEnabled = true;
         private Coroutine _holdRoutine;
 
+        // 외부(상호작용 포인트 등)가 홀드 요구 시간을 덮어쓸 때 쓴다. null이면 인스펙터 기본값을 쓴다.
+        private float? _holdRequiredTimeOverride;
+
         // 이 컴포넌트의 입력 판정을 켜고 끄는 스위치. 외부 시스템이 잠금/해제한다.
         // 꺼지는 순간 진행 중인 누름/홀드 판정을 이벤트 없이 취소한다.
         public bool InputEnabled
@@ -60,6 +63,23 @@ namespace KillOrDead.Player
 
         // 지금까지 키를 누르고 있던 시간(초). 안 누르고 있으면 0. 요청 시 계산한다.
         public float KeyHeldTime => IsKeyHeld ? Time.time - _pressTime : 0f;
+
+        // 이 입력에 적용할 홀드 요구 시간(초). 기본은 인스펙터의 holdRequiredTime이고,
+        // 상호작용 포인트처럼 동작별로 다른 값이 필요한 쪽이 설정하면 그 값이 우선한다.
+        public float HoldRequiredTime
+        {
+            get => _holdRequiredTimeOverride ?? holdRequiredTime;
+            set => _holdRequiredTimeOverride = Mathf.Max(0.01f, value);
+        }
+
+        // 인스펙터에 설정된 기본 홀드 요구 시간(초).
+        public float DefaultHoldRequiredTime => holdRequiredTime;
+
+        // 외부에서 덮어쓴 값을 지우고 인스펙터 기본값으로 되돌린다.
+        public void ResetHoldRequiredTime()
+        {
+            _holdRequiredTimeOverride = null;
+        }
 
         // 짧게 눌렀다 뗐을 때(판정 시간 미만)
         public event Action Tap;
@@ -138,7 +158,7 @@ namespace KillOrDead.Player
         // 홀드 발동 전담. 경계 시간을 통과한 뒤 요구 시간에 도달하면 키를 떼지 않아도 발동한다.
         private IEnumerator HoldRoutine()
         {
-            yield return new WaitForSeconds(tapHoldBoundaryTime + holdRequiredTime);
+            yield return new WaitForSeconds(tapHoldBoundaryTime + HoldRequiredTime);
 
             if (!IsKeyHeld || _holdFired) yield break;
 
