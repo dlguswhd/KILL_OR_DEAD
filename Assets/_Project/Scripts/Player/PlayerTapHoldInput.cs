@@ -1,6 +1,7 @@
 /*
 작성자: 이준호
 이 코드는 플레이어가 버튼을 누르고 있던 시간을 기반으로 입력을 탭·홀드·취소로 판정하고, 그 결과만 이벤트로 전달하는 역할을 담당한다.
+- 누르는 순간 Press 이벤트를 내보낸다(탭 동작만인 대상의 "누름 즉시 실행"용)
 - 누른 시간 < tapHoldBoundaryTime → 떼면 탭
 - tapHoldBoundaryTime 통과 후, 다시 holdRequiredTime만큼 더 누르면 → 홀드 발동(떼지 않아도)
 - 그 사이(경계 통과 ~ 홀드 발동 전)에 떼면 → 취소
@@ -81,6 +82,9 @@ namespace KillOrDead.Player
             _holdRequiredTimeOverride = null;
         }
 
+        // 키를 누르는 순간. 탭 동작만 할당된 대상이, 뗄 때를 기다리지 않고 누름 즉시 실행하는 데 쓴다.
+        public event Action Press;
+
         // 짧게 눌렀다 뗐을 때(판정 시간 미만)
         public event Action Tap;
 
@@ -134,6 +138,9 @@ namespace KillOrDead.Player
             _pressTime = Time.time;
             _holdFired = false;
             IsKeyHeld = true;
+
+            Log("Press");
+            Press?.Invoke();
 
             if (_holdRoutine != null) StopCoroutine(_holdRoutine);
             _holdRoutine = StartCoroutine(HoldRoutine());
