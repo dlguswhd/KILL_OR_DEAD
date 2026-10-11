@@ -112,3 +112,13 @@ sysinfo.txt
 /Claude outputs/
 /화면 캡처*.png
 /Screenshot*.png
+
+# ============================================
+# 협업 스킬 — 아래 5종만 저장소에 공유하고, 그 외 로컬 스킬은 무시
+# ============================================
+/.agents/skills/*
+!/.agents/skills/commit/
+!/.agents/skills/git-workflow/
+!/.agents/skills/issue-create/
+!/.agents/skills/branch-create/
+!/.agents/skills/pr-create/
