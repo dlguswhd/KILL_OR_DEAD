@@ -1,0 +1,135 @@
+using TMPro;
+using UnityEngine;
+
+[AddComponentMenu("KILL OR DEAD/Interaction/Interaction UI Controller")]
+public class InteractionUIController : MonoBehaviour
+{
+    [Header("탭 UI")]
+    [Tooltip("탭 동작이 배정됐을 때만 켤 UI 묶음.")]
+    [SerializeField]
+    private GameObject tapElement;
+
+    [Tooltip("탭 동작 안내 문구를 표시할 텍스트.")]
+    [SerializeField]
+    private TMP_Text tapMessageText;
+
+    [Header("홀드 UI")]
+    [Tooltip("홀드 동작이 배정됐을 때만 켤 UI 묶음(게이지 포함).")]
+    [SerializeField]
+    private GameObject holdElement;
+
+    [Tooltip("홀드 동작 안내 문구를 표시할 텍스트.")]
+    [SerializeField]
+    private TMP_Text holdMessageText;
+
+    [Header("키")]
+    [Tooltip("상호작용 키를 표시할 텍스트. 비워둘 수 있다.")]
+    [SerializeField]
+    private TMP_Text keyText;
+
+    // 지금 표시 중인 상호작용 대상. 없으면 null.
+    private InteractionPointController _target;
+
+    // 이번 누름에서 이미 탭 동작을 실행했는지. 누름 즉시 실행(탭만 배정)과 뗌 탭 판정의 중복 실행을 막는다.
+    private bool _tapInvokedThisPress;
+
+    public bool HasTarget => _target != null;
+
+    public InteractionPointController Target => _target;
+
+    private void Awake()
+    {
+        // 대상이 잡히기 전에는 숨겨둔다.
+        Hide();
+    }
+
+    // 선택 대상이 바뀌면 호출한다. 슬롯 구성에 따라 요소를 켜고 끄고 문구를 갱신한다.
+    // 대상이 없거나 동작이 하나도 배정되지 않았으면 UI를 숨긴다.
+    public void SetTarget(InteractionPointController point)
+    {
+        _target = point;
+        _tapInvokedThisPress = false;
+
+        if (point == null || !point.IsInteractable)
+        {
+            Hide();
+            return;
+        }
+
+        gameObject.SetActive(true);
+
+        if (tapElement != null) tapElement.SetActive(point.HasTap);
+        if (tapMessageText != null) tapMessageText.text = point.TapMessage;
+
+        if (holdElement != null) holdElement.SetActive(point.HasHold);
+        if (holdMessageText != null) holdMessageText.text = point.HoldMessage;
+    }
+
+    // 표시를 끈다.
+    public void ClearTarget()
+    {
+        _target = null;
+        _tapInvokedThisPress = false;
+        Hide();
+    }
+
+    // 상호작용 키 표시를 갱신한다. 게임패드 아이콘 등으로 바꿀 때 쓴다.
+    public void SetKeyLabel(string label)
+    {
+        if (keyText != null) keyText.text = label;
+    }
+
+    // ---- 입력 진입점 ----
+    // 탭/홀드 판정(#5, PlayerTapHoldInput)이 결과를 전달하면 UI가 대상의 슬롯을 실행한다.
+
+    // 키를 누른 순간.
+    public void OnPress()
+    {
+        _tapInvokedThisPress = false;
+        if (_target == null) return;
+
+        // 탭 동작만 배정: 입력 방식과 무관하게 누른 즉시 탭 동작을 실행한다.
+        if (_target.HasTap && !_target.HasHold)
+        {
+            _tapInvokedThisPress = true;
+            _target.InvokeTap();
+        }
+    }
+
+    // 짧게 눌렀다 뗀 탭 판정.
+    public void OnTapPerformed()
+    {
+        if (_target == null) return;
+
+        // 탭 동작이 있고, 누름에서 아직 실행하지 않았을 때만 실행한다(탭만 배정은 누름에서 이미 실행됨).
+        if (_target.HasTap && !_tapInvokedThisPress)
+        {
+            _tapInvokedThisPress = true;
+            _target.InvokeTap();
+        }
+    }
+
+    // 홀드 요구 시간을 채운 홀드 판정.
+    public void OnHoldCompleted()
+    {
+        if (_target == null || !_target.HasHold) return;
+
+        _target.InvokeHold();
+    }
+
+    // 홀드 도중 요구 시간 전에 뗀 취소.
+    public void OnCancelled()
+    {
+        SetHoldProgress(0f);
+    }
+
+    // 홀드 진행 게이지를 갱신한다(0~1). 홀드 UI가 준비되면 여기서 반영한다.
+    public void SetHoldProgress(float progress)
+    {
+    }
+
+    private void Hide()
+    {
+        gameObject.SetActive(false);
+    }
+}

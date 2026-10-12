@@ -149,6 +149,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2573736603993318102, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8117385033174845977}
+    - targetCorrespondingSourceObject: {fileID: 1455423802687713497, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7766001122334455667}
   m_SourcePrefab: {fileID: 100100000, guid: b6d4ea9ea9d91294caf1c1199a4a4fc0, type: 3}
 --- !u!1 &1131503542214682737 stripped
 GameObject:
@@ -479,3 +482,19 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &7766001122334455667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1131503542214682737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a26cf1b47554c7ea3f56653fc45ca16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  interactRange: 1
+  maxAngle: 30
+  detectorLayerName: InteractionDetector
+  interactableLayerName: Interactable
