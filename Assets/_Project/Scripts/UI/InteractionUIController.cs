@@ -35,6 +35,12 @@ public class InteractionUIController : MonoBehaviour
     // 지금 표시 중인 상호작용 대상. 없으면 null.
     private InteractionPointController _target;
 
+    // 이 UI의 RectTransform. 화면 좌표를 붙일 때 이 루트의 정중앙(로컬 0,0,0)을 쓴다.
+    private RectTransform _rect;
+
+    // 이 UI가 붙어 있는 캔버스. 화면 중앙 기준 좌표를 캔버스 스케일로 환산할 때 쓴다.
+    private Canvas _canvas;
+
     // 이번 누름에서 이미 탭 동작을 실행했는지. 누름 즉시 실행(탭만 배정)과 뗌 탭 판정의 중복 실행을 막는다.
     private bool _tapInvokedThisPress;
 
@@ -44,6 +50,9 @@ public class InteractionUIController : MonoBehaviour
 
     private void Awake()
     {
+        _rect = (RectTransform)transform;
+        _canvas = GetComponentInParent<Canvas>();
+
         // 대상이 잡히기 전에는 숨겨둔다.
         Hide();
     }
@@ -134,6 +143,20 @@ public class InteractionUIController : MonoBehaviour
     {
         if (holdProgressFill != null)
             holdProgressFill.fillAmount = Mathf.Clamp01(progress);
+    }
+
+    // 화면 좌표(px)를 이 UI의 정중앙(로컬 0,0,0)에 붙인다.
+    // 이 UI의 앵커가 화면 중앙(0.5,0.5)이므로, 화면 중앙 기준 오프셋을 캔버스 스케일로 나누면
+    // 캔버스 피벗·렌더 모드와 무관하게 중앙이 화면 좌표에 정렬된다.
+    public void SetScreenPosition(Vector2 screenPoint)
+    {
+        if (_rect == null) return;
+
+        float scale = _canvas != null ? _canvas.scaleFactor : 1f;
+        if (scale <= 0f) scale = 1f;
+
+        Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        _rect.anchoredPosition = (screenPoint - screenCenter) / scale;
     }
 
     private void Hide()

@@ -68,6 +68,24 @@ public class InteractionDetector : MonoBehaviour
         UpdateHoldProgress();
     }
 
+    // 카메라 이동이 끝난 뒤 대상 위치를 화면 좌표로 투영해 UI를 붙인다.
+    // Update에서 하면 카메라 회전이 반영되기 전 좌표로 한 프레임 뒤처진다.
+    private void LateUpdate()
+    {
+        UpdateScreenPosition();
+    }
+
+    // 선택된 대상의 월드 좌표를 화면 좌표로 투영해 UI 정중앙에 붙인다.
+    private void UpdateScreenPosition()
+    {
+        if (_ui == null || _current == null || _camera == null) return;
+
+        Vector3 screenPoint = _camera.WorldToScreenPoint(_current.Position);
+        if (screenPoint.z <= 0f) return; // 카메라 뒤. 각도 조건상 드물다.
+
+        _ui.SetScreenPosition(screenPoint);
+    }
+
     // 홀드 대상이 있을 때 홀드 구간 진행도((경과 - 경계) / 요구 시간)를 UI로 전달한다.
     // 경계 전에는 0, 요구 시간 도달 시 1.
     private void UpdateHoldProgress()
@@ -155,7 +173,12 @@ public class InteractionDetector : MonoBehaviour
         if (_ui == null) return;
 
         if (point == null) _ui.ClearTarget();
-        else _ui.SetTarget(point);
+        else
+        {
+            _ui.SetTarget(point);
+            // 대상이 막 잡힌 프레임에 UI가 이전 위치에 잠깐 보이는 것을 막는다.
+            UpdateScreenPosition();
+        }
     }
 
     // 탭/홀드 판정 결과를 UI로 전달한다. 실제 동작 실행은 UI가 담당한다.
