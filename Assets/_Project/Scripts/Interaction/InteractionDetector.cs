@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using KillOrDead.Player;
 using UnityEngine;
 
@@ -6,40 +5,43 @@ using UnityEngine;
 public class InteractionDetector : MonoBehaviour
 {
     [Header("감지")]
-    [Tooltip("상호작용 반경(m). 플레이어 중심 공통 값이라 이 한 곳에서 조절한다.")]
+    [Tooltip("상호작용 반경(m). 플레이어 몸통 중심 기준. 한 곳에서 조절한다.")]
     [SerializeField]
     private float interactRange = 1f;
 
-    [Tooltip("카메라 중앙 전방(V1)과 플레이어→포인트(V2)가 이루는 허용 각도(도).")]
+    [Tooltip("카메라 중앙 전방(V1)과 플레이어 시점→포인트(V2)가 이루는 허용 각도(도).")]
     [SerializeField]
     private float maxAngle = 30f;
 
-    [Header("레이어")]
-    [Tooltip("감지용 트리거를 둘 레이어 이름.")]
-    [SerializeField]
-    private string detectorLayerName = "InteractionDetector";
-
-    [Tooltip("상호작용 포인트가 있는 레이어 이름.")]
+    [Tooltip("상호작용 포인트가 있는 레이어 이름. 물리 쿼리 마스크로 쓴다.")]
     [SerializeField]
     private string interactableLayerName = "Interactable";
 
-    // 반경 안에 들어온 포인트 후보들.
-    private readonly HashSet<InteractionPointController> _candidates = new();
+    [Header("디버그")]
+    [Tooltip("대상이 바뀔 때 콘솔에 로그를 찍는다.")]
+    [SerializeField]
+    private bool logSelection;
 
     // 지금 표시 중인 대상.
     private InteractionPointController _current;
 
     private Camera _camera;
+    private CharacterController _characterController;
     private InteractionUIController _ui;
     private PlayerTapHoldInput _tapHold;
-    private int _interactableLayer = -1;
+
+    // OverlapSphere 결과를 담는 재사용 버퍼(alloc 0).
+    private readonly Collider[] _hits = new Collider[64];
+    private int _pointMask;
 
     private void Awake()
     {
         _camera = GetComponentInChildren<Camera>(true);
+        _characterController = GetComponent<CharacterController>();
         _tapHold = GetComponent<PlayerTapHoldInput>();
-        _interactableLayer = LayerMask.NameToLayer(interactableLayerName);
-        BuildTrigger();
+
+        int layer = LayerMask.NameToLayer(interactableLayerName);
+        _pointMask = layer >= 0 ? 1 << layer : ~0;
     }
 
     private void OnEnable()
@@ -60,54 +62,12 @@ public class InteractionDetector : MonoBehaviour
         _tapHold.Cancelled -= OnCancelled;
     }
 
-    // 플레이어 자식으로 감지용 트리거를 만든다. 포인트는 여기에 겹쳐서 후보가 된다.
-    private void BuildTrigger()
-    {
-        var go = new GameObject("InteractionDetectorTrigger");
-        go.transform.SetParent(transform, false);
-
-        int layer = LayerMask.NameToLayer(detectorLayerName);
-        if (layer >= 0) go.layer = layer;
-
-        var col = go.AddComponent<SphereCollider>();
-        col.isTrigger = true;
-        col.radius = interactRange;
-
-        // 트리거 이벤트가 발생하려면 한쪽에 리지드바디가 필요하다. 포인트는 리지드바디를 두지 않으므로 여기에 둔다.
-        // kinematic이라 밀리지 않고, 무게/중력의 영향을 받지 않는다.
-        var rb = go.AddComponent<Rigidbody>();
-        rb.isKinematic = true;
-        rb.useGravity = false;
-
-        var forwarder = go.AddComponent<InteractionDetectorTrigger>();
-        forwarder.detector = this;
-    }
-
-    internal void OnPointEnter(Collider other)
-    {
-        var point = other.GetComponentInParent<InteractionPointController>();
-        if (point == null) return;
-
-        _candidates.Add(point);
-        Evaluate();
-    }
-
-    internal void OnPointExit(Collider other)
-    {
-        var point = other.GetComponentInParent<InteractionPointController>();
-        if (point == null) return;
-
-        _candidates.Remove(point);
-        Evaluate();
-    }
-
     private void Update()
     {
-        // 각도는 카메라를 돌리면 입력과 무관하게 계속 바뀌므로 매 프레임 다시 고른다.
-        if (_candidates.Count > 0) Evaluate();
+        Evaluate();
     }
 
-    // 조건(근접 + 각도 + 동작 1개 이상)을 만족하는 후보 중 각도가 가장 작은 것을 고른다.
+    // 플레이어 몸통 중심 반경 안의 포인트를 물리 쿼리로 모아온다. 통과한 후보만 각도(카메라)를 계산한다.
     private void Evaluate()
     {
         if (_camera == null)
@@ -116,22 +76,39 @@ public class InteractionDetector : MonoBehaviour
             return;
         }
 
-        Vector3 origin = transform.position;
+        // 반경 기준: 플레이어 몸통 중심.
+        Vector3 bodyCenter = _characterController != null
+            ? _characterController.transform.TransformPoint(_characterController.center)
+            : transform.position;
+
+        // 각도 기준: 카메라(눈).
+        Vector3 eyePos = _camera.transform.position;
         Vector3 forward = _camera.transform.forward;
+
+        float rangeSqr = interactRange * interactRange;
         float cosLimit = Mathf.Cos(maxAngle * Mathf.Deg2Rad);
+
+        int count = Physics.OverlapSphereNonAlloc(bodyCenter, interactRange, _hits, _pointMask,
+            QueryTriggerInteraction.Collide);
 
         InteractionPointController best = null;
         float bestDot = cosLimit;
 
-        foreach (var point in _candidates)
+        for (int i = 0; i < count; i++)
         {
+            var col = _hits[i];
+            if (col == null) continue;
+
+            var point = col.GetComponentInParent<InteractionPointController>();
             if (point == null || !point.IsInteractable) continue;
-            if (_interactableLayer >= 0 && point.gameObject.layer != _interactableLayer) continue;
 
-            Vector3 toPoint = point.transform.position - origin;
-            if (toPoint.sqrMagnitude > interactRange * interactRange) continue;
+            // 콜라이더 반경이 더해지는 것을 보정해 정확한 거리로 다시 거른다.
+            if ((point.Position - bodyCenter).sqrMagnitude > rangeSqr) continue;
 
-            float dot = Vector3.Dot(forward, toPoint.normalized);
+            // 카메라 중앙 전방과의 각도가 maxAngle 이내인지(dot 최대 = 각도 최소).
+            float dot = Vector3.Dot(forward, (point.Position - eyePos).normalized);
+            if (dot < cosLimit) continue;
+
             if (dot > bestDot)
             {
                 bestDot = dot;
@@ -146,6 +123,9 @@ public class InteractionDetector : MonoBehaviour
     {
         if (_current == point) return;
         _current = point;
+
+        if (logSelection)
+            Debug.Log($"InteractionDetector: 대상 = {(point != null ? point.name : "없음")}", this);
 
         if (_ui == null)
         {

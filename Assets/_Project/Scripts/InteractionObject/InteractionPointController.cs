@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-[RequireComponent(typeof(SphereCollider))]
 public class InteractionPointController : MonoBehaviour
 {
     [Header("동작 슬롯 (탭 / 홀드)")]
@@ -21,15 +20,6 @@ public class InteractionPointController : MonoBehaviour
     [Tooltip("홀드 동작을 안내하는 문구. 상호작용 UI에 표시된다.")]
     [SerializeField]
     private string holdMessage = "상호작용";
-
-    [Header("콜라이더 관련 설정들")]
-    [Tooltip("플레이어가 반경 내에 있는지 확인하기 위한 콜라이더. 동일한 게임 오브젝트 내에 있는 구형 콜라이더를 넣어주거나, 비워두세요.")]
-    [SerializeField]
-    private SphereCollider col;
-
-    [Tooltip("콜라이더 반경")]
-    [SerializeField]
-    private float colliderRadius;
 
     // 탭 동작 슬롯. UI가 입력을 받아 이 이벤트를 실행한다.
     public UnityEvent TapAction => tapAction;
@@ -52,38 +42,14 @@ public class InteractionPointController : MonoBehaviour
     // 홀드 동작 안내 문구.
     public string HoldMessage => holdMessage;
 
+    // 감지기가 거리·각도를 계산할 때 쓰는 위치.
+    public Vector3 Position => transform.position;
+
     // 탭 동작을 실행한다.
     public void InvokeTap() => tapAction?.Invoke();
 
     // 홀드 동작을 실행한다.
     public void InvokeHold() => holdAction?.Invoke();
-
-    private void Start()
-    {
-        ComponentSet();
-        CheckComponentSet();
-    }
-
-    private void Update()
-    {
-        
-    }
-    
-    private void ComponentSet()
-    {
-        if(col == null) col = GetComponent<SphereCollider>();
-        col.radius = colliderRadius;
-        if(!col.isTrigger) col.isTrigger = true;
-    }
-    
-    private void CheckComponentSet()
-    {
-        if (col == null)
-        {
-            Debug.LogError($"플레이어 인식용 콜라이더 비어있음.");
-            return;
-        }
-    }
 
 #if UNITY_EDITOR
     private void OnValidate()

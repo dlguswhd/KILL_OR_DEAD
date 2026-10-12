@@ -5526,23 +5526,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4308928882180276236, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
   m_PrefabInstance: {fileID: 1281694262819398917}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &86679184
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 86679182}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 106081b35135c442bafba2096dc73a90, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractionUIController
-  tapElement: {fileID: 308806072}
-  tapMessageText: {fileID: 0}
-  holdElement: {fileID: 0}
-  holdMessageText: {fileID: 0}
-  keyText: {fileID: 0}
 --- !u!1 &87946452
 GameObject:
   m_ObjectHideFlags: 0
@@ -24276,7 +24259,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.03
+  m_Radius: 0.1
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &418001268
 MonoBehaviour:
@@ -24310,8 +24293,6 @@ MonoBehaviour:
       m_Calls: []
   tapMessage: "\uC784\uC2DC\uC6A9 \uD0ED \uB3D9\uC791"
   holdMessage: "\uC784\uC2DC\uC6A9 \uD640\uB4DC \uB3D9\uC791"
-  col: {fileID: 418001267}
-  colliderRadius: 0.03
 --- !u!1 &419061102
 GameObject:
   m_ObjectHideFlags: 0
@@ -117744,9 +117725,6 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 7281815525966879138, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 86679184}
     - targetCorrespondingSourceObject: {fileID: 3693120645401800362, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 308806074}

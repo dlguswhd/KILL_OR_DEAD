@@ -496,5 +496,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   interactRange: 1
   maxAngle: 30
-  detectorLayerName: InteractionDetector
-  interactableLayerName: Interactable
+  logSelection: 0
