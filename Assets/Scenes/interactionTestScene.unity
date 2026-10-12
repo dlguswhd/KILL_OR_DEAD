@@ -53650,10 +53650,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractionPointController
   tapAction:
     m_PersistentCalls:
+      m_Calls: []
+  holdAction:
+    m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 879511562}
         m_TargetAssemblyTypeName: InteractionPointTestAction, Assembly-CSharp
-        m_MethodName: Tap
+        m_MethodName: Hold
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -53663,9 +53666,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  holdAction:
-    m_PersistentCalls:
-      m_Calls: []
   tapMessage: "\uC784\uC2DC\uC6A9 \uD0ED \uB3D9\uC791 2"
   holdMessage: "\uC784\uC2DC\uC6A9 \uD640\uB4DC \uB3D9\uC791 2"
 --- !u!135 &919379535
@@ -117994,6 +117994,38 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 634650609}
     m_Modifications:
+    - target: {fileID: 654972638255566244, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2537155600748117546, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2537155600748117546, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2537155600748117546, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2537155600748117546, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2537155600748117546, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2537155600748117546, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3909527812057006935, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4308928882180276236, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -118072,6 +118104,30 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4308928882180276236, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4774016807674898862, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4774016807674898862, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4774016807674898862, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4774016807674898862, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4774016807674898862, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4774016807674898862, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7281815525966879138, guid: bc15db377aec743c0bd53082e0b6e6a2, type: 3}
