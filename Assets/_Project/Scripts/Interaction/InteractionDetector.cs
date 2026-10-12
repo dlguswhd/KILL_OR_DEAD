@@ -65,6 +65,25 @@ public class InteractionDetector : MonoBehaviour
     private void Update()
     {
         Evaluate();
+        UpdateHoldProgress();
+    }
+
+    // 홀드 대상이 있을 때 홀드 구간 진행도((경과 - 경계) / 요구 시간)를 UI로 전달한다.
+    // 경계 전에는 0, 요구 시간 도달 시 1.
+    private void UpdateHoldProgress()
+    {
+        if (_ui == null || _tapHold == null) return;
+        if (!_ui.HasTarget || !_ui.Target.HasHold) return;
+
+        float progress = 0f;
+        if (_tapHold.IsKeyHeld)
+        {
+            float holdTime = _tapHold.KeyHeldTime - _tapHold.TapHoldBoundaryTime;
+            if (holdTime > 0f)
+                progress = holdTime / _tapHold.HoldRequiredTime;
+        }
+
+        _ui.SetHoldProgress(progress);
     }
 
     // 플레이어 몸통 중심 반경 안의 포인트를 물리 쿼리로 모아온다. 통과한 후보만 각도(카메라)를 계산한다.

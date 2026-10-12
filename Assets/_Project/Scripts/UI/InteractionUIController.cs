@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 [AddComponentMenu("KILL OR DEAD/Interaction/Interaction UI Controller")]
 public class InteractionUIController : MonoBehaviour
@@ -21,6 +22,10 @@ public class InteractionUIController : MonoBehaviour
     [Tooltip("홀드 동작 안내 문구를 표시할 텍스트.")]
     [SerializeField]
     private TMP_Text holdMessageText;
+
+    [Tooltip("홀드 진행 게이지(0~1). 게이지 링의 Fill Image를 연결한다.")]
+    [SerializeField]
+    private Image holdProgressFill;
 
     [Header("키")]
     [Tooltip("상호작용 키를 표시할 텍스트. 비워둘 수 있다.")]
@@ -49,6 +54,7 @@ public class InteractionUIController : MonoBehaviour
     {
         _target = point;
         _tapInvokedThisPress = false;
+        SetHoldProgress(0f);
 
         if (point == null || !point.IsInteractable)
         {
@@ -123,9 +129,11 @@ public class InteractionUIController : MonoBehaviour
         SetHoldProgress(0f);
     }
 
-    // 홀드 진행 게이지를 갱신한다(0~1). 홀드 UI가 준비되면 여기서 반영한다.
+    // 홀드 진행 게이지를 갱신한다(0~1). 홀드 구간(경계 통과 이후)만 반영한다.
     public void SetHoldProgress(float progress)
     {
+        if (holdProgressFill != null)
+            holdProgressFill.fillAmount = Mathf.Clamp01(progress);
     }
 
     private void Hide()
