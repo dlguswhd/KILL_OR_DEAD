@@ -28,31 +28,60 @@
 # ============================================
 # Git LFS — 큰 바이너리 파일
 # 반드시 "첫 커밋 전"에 설정되어 있어야 한다
+#
+# 대소문자 양쪽 패턴을 모두 둔다.
+# gitattributes 패턴 매칭은 core.ignorecase 를 따르는데,
+# 이 값은 파일시스템의 대소문자 구분 여부로 자동 결정된다.
+# 따라서 대소문자 구분 파일시스템(리눅스, Docker, CI 등)에서는
+# "*.fbx" 가 "*.FBX" 에 매칭되지 않아 LFS 누락이 발생한다.
 # ============================================
 *.fbx    filter=lfs diff=lfs merge=lfs -text
+*.FBX    filter=lfs diff=lfs merge=lfs -text
 *.blend  filter=lfs diff=lfs merge=lfs -text
+*.BLEND  filter=lfs diff=lfs merge=lfs -text
 *.obj    filter=lfs diff=lfs merge=lfs -text
+*.OBJ    filter=lfs diff=lfs merge=lfs -text
 *.dae    filter=lfs diff=lfs merge=lfs -text
+*.DAE    filter=lfs diff=lfs merge=lfs -text
 *.3ds    filter=lfs diff=lfs merge=lfs -text
+*.3DS    filter=lfs diff=lfs merge=lfs -text
 
 *.png    filter=lfs diff=lfs merge=lfs -text
+*.PNG    filter=lfs diff=lfs merge=lfs -text
 *.jpg    filter=lfs diff=lfs merge=lfs -text
+*.JPG    filter=lfs diff=lfs merge=lfs -text
 *.jpeg   filter=lfs diff=lfs merge=lfs -text
+*.JPEG   filter=lfs diff=lfs merge=lfs -text
 *.tga    filter=lfs diff=lfs merge=lfs -text
+*.TGA    filter=lfs diff=lfs merge=lfs -text
 *.tif    filter=lfs diff=lfs merge=lfs -text
+*.TIF    filter=lfs diff=lfs merge=lfs -text
 *.tiff   filter=lfs diff=lfs merge=lfs -text
+*.TIFF   filter=lfs diff=lfs merge=lfs -text
 *.psd    filter=lfs diff=lfs merge=lfs -text
+*.PSD    filter=lfs diff=lfs merge=lfs -text
 *.exr    filter=lfs diff=lfs merge=lfs -text
+*.EXR    filter=lfs diff=lfs merge=lfs -text
 *.hdr    filter=lfs diff=lfs merge=lfs -text
+*.HDR    filter=lfs diff=lfs merge=lfs -text
 *.cubemap filter=lfs diff=lfs merge=lfs -text
+*.CUBEMAP filter=lfs diff=lfs merge=lfs -text
 
 *.wav    filter=lfs diff=lfs merge=lfs -text
+*.WAV    filter=lfs diff=lfs merge=lfs -text
 *.mp3    filter=lfs diff=lfs merge=lfs -text
+*.MP3    filter=lfs diff=lfs merge=lfs -text
 *.ogg    filter=lfs diff=lfs merge=lfs -text
+*.OGG    filter=lfs diff=lfs merge=lfs -text
 *.aif    filter=lfs diff=lfs merge=lfs -text
+*.AIF    filter=lfs diff=lfs merge=lfs -text
 
 *.mp4    filter=lfs diff=lfs merge=lfs -text
+*.MP4    filter=lfs diff=lfs merge=lfs -text
 *.mov    filter=lfs diff=lfs merge=lfs -text
+*.MOV    filter=lfs diff=lfs merge=lfs -text
 
 *.ttf    filter=lfs diff=lfs merge=lfs -text
+*.TTF    filter=lfs diff=lfs merge=lfs -text
 *.otf    filter=lfs diff=lfs merge=lfs -text
+*.OTF    filter=lfs diff=lfs merge=lfs -text
