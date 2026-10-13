@@ -27,13 +27,8 @@ public class InteractionUIController : MonoBehaviour
     [SerializeField]
     private Image holdProgressFill;
 
-    [Header("키")]
-    [Tooltip("상호작용 키를 표시할 텍스트. 비워둘 수 있다.")]
-    [SerializeField]
-    private TMP_Text keyText;
-
     // 지금 표시 중인 상호작용 대상. 없으면 null.
-    private InteractionPointController _target;
+    private InteractionPointController _interactionTarget;
 
     // 이 UI의 RectTransform. 화면 좌표를 붙일 때 이 루트의 정중앙(로컬 0,0,0)을 쓴다.
     private RectTransform _rect;
@@ -44,9 +39,9 @@ public class InteractionUIController : MonoBehaviour
     // 이번 누름에서 이미 탭 동작을 실행했는지. 누름 즉시 실행(탭만 배정)과 뗌 탭 판정의 중복 실행을 막는다.
     private bool _tapInvokedThisPress;
 
-    public bool HasTarget => _target != null;
+    public bool HasTarget => _interactionTarget != null;
 
-    public InteractionPointController Target => _target;
+    public InteractionPointController Target => _interactionTarget;
 
     private void Awake()
     {
@@ -61,7 +56,7 @@ public class InteractionUIController : MonoBehaviour
     // 대상이 없거나 동작이 하나도 배정되지 않았으면 UI를 숨긴다.
     public void SetTarget(InteractionPointController point)
     {
-        _target = point;
+        _interactionTarget = point;
         _tapInvokedThisPress = false;
         SetHoldProgress(0f);
 
@@ -83,15 +78,9 @@ public class InteractionUIController : MonoBehaviour
     // 표시를 끈다.
     public void ClearTarget()
     {
-        _target = null;
+        _interactionTarget = null;
         _tapInvokedThisPress = false;
         Hide();
-    }
-
-    // 상호작용 키 표시를 갱신한다. 게임패드 아이콘 등으로 바꿀 때 쓴다.
-    public void SetKeyLabel(string label)
-    {
-        if (keyText != null) keyText.text = label;
     }
 
     // ---- 입력 진입점 ----
@@ -101,35 +90,35 @@ public class InteractionUIController : MonoBehaviour
     public void OnPress()
     {
         _tapInvokedThisPress = false;
-        if (_target == null) return;
+        if (_interactionTarget == null) return;
 
         // 탭 동작만 배정: 입력 방식과 무관하게 누른 즉시 탭 동작을 실행한다.
-        if (_target.HasTap && !_target.HasHold)
+        if (_interactionTarget.HasTap && !_interactionTarget.HasHold)
         {
             _tapInvokedThisPress = true;
-            _target.InvokeTap();
+            _interactionTarget.InvokeTap();
         }
     }
 
     // 짧게 눌렀다 뗀 탭 판정.
     public void OnTapPerformed()
     {
-        if (_target == null) return;
+        if (_interactionTarget == null) return;
 
         // 탭 동작이 있고, 누름에서 아직 실행하지 않았을 때만 실행한다(탭만 배정은 누름에서 이미 실행됨).
-        if (_target.HasTap && !_tapInvokedThisPress)
+        if (_interactionTarget.HasTap && !_tapInvokedThisPress)
         {
             _tapInvokedThisPress = true;
-            _target.InvokeTap();
+            _interactionTarget.InvokeTap();
         }
     }
 
     // 홀드 요구 시간을 채운 홀드 판정.
     public void OnHoldCompleted()
     {
-        if (_target == null || !_target.HasHold) return;
+        if (_interactionTarget == null || !_interactionTarget.HasHold) return;
 
-        _target.InvokeHold();
+        _interactionTarget.InvokeHold();
     }
 
     // 홀드 도중 요구 시간 전에 뗀 취소.
