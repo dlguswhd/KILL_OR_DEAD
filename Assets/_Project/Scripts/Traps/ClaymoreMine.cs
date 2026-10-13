@@ -30,7 +30,7 @@ namespace KillOrDead.Traps
         [Tooltip("감지 반경(m). 기획 확정 5m.")]
         [SerializeField, Min(0.1f)] private float detectionRadius = 5f;
 
-        [Tooltip("감지 각도(도). 정면 기준 좌우 절반씩. 기획 확정 60°.")]
+        [Tooltip("감지 각도(도). 정면 기준 좌우 절반씩. 기획 확정 60°. 보이는 양 끝 레이저도 이 각도를 따라간다(줄이면 같이 좁아짐).")]
         [SerializeField, Range(1f, 180f)] private float detectionAngle = 60f;
 
         [Tooltip("레이저 빔 개수. 기획 초안 31개(2° 간격). 5m 끝에서도 빔 사이가 약 17cm라 사람이 빠져나갈 수 없다.")]
@@ -86,6 +86,7 @@ namespace KillOrDead.Traps
         private bool[] _beamHitSomething;
         private Transform _player;
         private CharacterController _playerController;
+        private ClaymoreParts _parts;
         private bool _exploded;
 
         public Transform LaserOrigin => laserOrigin != null ? laserOrigin : transform;
@@ -97,10 +98,17 @@ namespace KillOrDead.Traps
         /// <summary>빔 i가 무언가(벽·바닥·몸)에 닿아서 끊겼는지. 끝점에 빨간 점을 찍을지 정할 때 쓴다.</summary>
         public bool BeamHitSomething(int i) => _beamHitSomething[i];
 
+        /// <summary>
+        /// 센서가 살아 있는지. 센서가 총에 맞아 부서지면(<see cref="ClaymoreParts.DestroySensor"/>) false가 되고,
+        /// 감지와 레이저가 모두 꺼진다. ClaymoreParts가 없는 크레모어는 항상 살아 있는 것으로 본다.
+        /// </summary>
+        public bool IsSensorActive => _parts == null || !_parts.IsSensorDestroyed;
+
         private void Awake()
         {
             _beamEnds = new Vector3[beamCount];
             _beamHitSomething = new bool[beamCount];
+            _parts = GetComponent<ClaymoreParts>();
         }
 
         private void Start()
@@ -119,9 +127,39 @@ namespace KillOrDead.Traps
         private void FixedUpdate()
         {
             if (_exploded) return;
-            if (!IsPlayerNearby()) return;
 
-            ScanBeams();
+            // 센서가 부서지면 무력화 — 감지하지 않는다 (기획: 센서 피격 → 레이저 OFF).
+            if (!IsSensorActive) return;
+
+            if (IsPlayerNearby())
+            {
+                ScanBeams();
+            }
+            else
+            {
+                // 플레이어가 멀리 있으면 기폭 판정은 하지 않고, 그려지는 빔의 끝점만 갱신한다.
+                // 그래야 감지 각도를 바꾸거나 문이 열려도 보이는 빔이 바로 따라온다.
+                for (int i = 0; i < beamCount; i++) RefreshBeamEnd(i);
+            }
+        }
+
+        /// <summary>빔 i 하나의 끝점만 다시 구한다(감지·기폭은 하지 않음).</summary>
+        private void RefreshBeamEnd(int i)
+        {
+            Vector3 origin = LaserOrigin.position;
+            Vector3 direction = GetBeamDirection(i);
+
+            if (Physics.Raycast(origin, direction, out RaycastHit hit, detectionRadius,
+                    detectionMask, QueryTriggerInteraction.Ignore))
+            {
+                _beamEnds[i] = hit.point;
+                _beamHitSomething[i] = true;
+            }
+            else
+            {
+                _beamEnds[i] = origin + direction * detectionRadius;
+                _beamHitSomething[i] = false;
+            }
         }
 
         private bool IsPlayerNearby()
