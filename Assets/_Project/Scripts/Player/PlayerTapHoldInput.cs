@@ -53,7 +53,7 @@ namespace KillOrDead.Player
 
                 if (!value && IsKeyHeld)
                 {
-                    Log("Forced cancel (input disabled)");
+                    // Log("Forced cancel (input disabled)");
                     CancelCurrentInput();
                 }
             }
@@ -75,6 +75,10 @@ namespace KillOrDead.Player
 
         // 인스펙터에 설정된 기본 홀드 요구 시간(초).
         public float DefaultHoldRequiredTime => holdRequiredTime;
+
+        // 탭/홀드 판정 경계 시간(초). 이 시간 미만이면 탭, 이상이면 홀드 구간이다.
+        // 홀드 게이지 진행도 계산의 시작점으로 쓴다.
+        public float TapHoldBoundaryTime => tapHoldBoundaryTime;
 
         // 외부에서 덮어쓴 값을 지우고 인스펙터 기본값으로 되돌린다.
         public void ResetHoldRequiredTime()
@@ -139,7 +143,7 @@ namespace KillOrDead.Player
             _holdFired = false;
             IsKeyHeld = true;
 
-            Log("Press");
+            // Log("Press");
             Press?.Invoke();
 
             if (_holdRoutine != null) StopCoroutine(_holdRoutine);
@@ -154,7 +158,7 @@ namespace KillOrDead.Player
             // 잠금/액션 비활성에 의한 강제 취소는 탭·홀드·취소 어느 이벤트도 내보내지 않는다.
             if (!_inputEnabled || !_action.enabled)
             {
-                Log("Forced cancel (action disabled)");
+                // Log("Forced cancel (action disabled)");
                 CancelCurrentInput();
                 return;
             }
@@ -170,7 +174,7 @@ namespace KillOrDead.Player
             if (!IsKeyHeld || _holdFired) yield break;
 
             _holdFired = true;
-            Log("Hold");
+            // Log("Hold");
             Hold?.Invoke();
         }
 
@@ -183,13 +187,13 @@ namespace KillOrDead.Player
                 // 탭: 유지 시간이 경계 미만
                 if (heldTime < tapHoldBoundaryTime)
                 {
-                    Log($"Tap ({heldTime:0.00}s)");
+                    // Log($"Tap ({heldTime:0.00}s)");
                     Tap?.Invoke();
                 }
                 // 취소: 경계를 넘겼지만 홀드 요구 시간 전에 뗌
                 else
                 {
-                    Log($"Cancelled ({heldTime:0.00}s)");
+                    // Log($"Cancelled ({heldTime:0.00}s)");
                     Cancelled?.Invoke();
                 }
             }
