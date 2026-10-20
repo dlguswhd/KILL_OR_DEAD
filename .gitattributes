@@ -85,3 +85,6 @@
 *.TTF    filter=lfs diff=lfs merge=lfs -text
 *.otf    filter=lfs diff=lfs merge=lfs -text
 *.OTF    filter=lfs diff=lfs merge=lfs -text
+
+# Baked NavMesh data uses Unity binary serialization.
+Assets/Scenes/Home_Blockout/NavMesh-NevMeshSurface.asset binary
