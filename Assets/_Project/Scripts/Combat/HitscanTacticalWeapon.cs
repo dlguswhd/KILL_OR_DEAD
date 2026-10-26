@@ -192,6 +192,11 @@ namespace KillOrDead.Combat
 
                 var damageable = hit.collider.GetComponentInParent<IDamageable>();
                 damageable?.TakeDamage(damage);
+
+                // 크레모어 센서(카메라)에 맞으면 센서가 부서진 모델로 바뀐다.
+                // 본체에 맞은 건 센서 파괴가 아니므로, 맞은 콜라이더가 센서 것인지 확인한다.
+                var claymore = hit.collider.GetComponentInParent<ClaymoreParts>();
+                if (claymore != null && claymore.IsSensorCollider(hit.collider)) claymore.DestroySensor();
             }
 
             // 반동은 탄착 판정이 끝난 뒤에 적용한다. 먼저 적용하면 조준하던 곳이 아니라
