@@ -21,6 +21,11 @@ public class InteractionPointController : MonoBehaviour
     [SerializeField]
     private string holdMessage = "상호작용";
 
+    [Header("홀드 시간")]
+    [Tooltip("키를 누른 순간부터 홀드 동작이 실행될 때까지 걸리는 시간(초). 0이면 플레이어 PlayerTapHoldInput의 기본값을 쓴다.")]
+    [SerializeField, Min(0f)]
+    private float holdTime = 0f;
+
     // 탭 동작 슬롯. UI가 입력을 받아 이 이벤트를 실행한다.
     public UnityEvent TapAction => tapAction;
 
@@ -41,6 +46,9 @@ public class InteractionPointController : MonoBehaviour
 
     // 홀드 동작 안내 문구.
     public string HoldMessage => holdMessage;
+
+    // 이 포인트 전용 홀드 시간(초, 누른 순간부터). 0이면 따로 정하지 않은 것.
+    public float HoldTime => holdTime;
 
     // 감지기가 거리·각도를 계산할 때 쓰는 위치.
     public Vector3 Position => transform.position;

@@ -1,42 +1,23 @@
 using KillOrDead.Combat;
+using KillOrDead.UI;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace KillOrDead.Traps
 {
     /// <summary>
-    /// 크레모어 레이저의 "보이는 부분"만 담당한다. 판정은 하지 않는다.
+    /// 크레모어의 "보이고 들리는 부분"만 담당한다. 판정은 하지 않는다.
     ///
-    /// - 빔: 감지 레이 31개를 전부 그리되, <b>가장 양옆 2줄만 또렷하게</b>, 그 사이 29줄은 <b>아주 은은하게</b> 그린다.
-    ///   ("레이저가 너무 많고 밝다" → 양옆만 남겼더니 허전하다 → 사이를 은은한 빛으로 채움)
-    ///   빔 끝점은 감지 레이 결과를 그대로 받으므로, 벽에 막히면 보이는 선도 거기서 끊긴다 (보이는 레이저 = 판정).
-    ///   빔 방향은 감지 각도에서 나오므로, 감지 각도를 줄이면 부채꼴 전체가 같이 좁아진다.
-    /// - 끝점: 빔이 벽·바닥·몸에 닿았으면 그 자리에 작은 빨간 점.
+    /// - 레이저 빔은 그리지 않는다. 감지는 <see cref="ClaymoreMine"/>이 보이지 않는 레이로 그대로 한다.
     /// - LED: 센서 옆 빨간 LED가 천천히 깜빡인다.
-    /// - 전자음: 가까이 가야 들리는 작은 소리 (클립이 비어 있으면 무음).
-    /// - 센서가 부서지면(<see cref="ClaymoreMine.IsSensorActive"/> = false) 빔·점·소리를 모두 끈다.
+    /// - 부저음: 플레이어가 일정 범위 안에 들어오면 반복 재생하고, 나가면 멈춘다 (클립이 비어 있으면 무음).
+    /// - 센서가 부서지거나 해체되면(<see cref="ClaymoreMine.IsArmed"/> = false) LED·부저음을 모두 끈다.
+    /// - 센서가 총에 맞아 부서지는 순간 전기 스파크 이펙트와 소리를 한 번 낸다.
+    /// - 해체(선 절단)·센서 파괴 순간, 그 부위를 화면 오른쪽 위 칸에 확대해서 보여준다(<see cref="ClaymoreInspectUI"/>).
     /// </summary>
     [AddComponentMenu("KILL OR DEAD/Traps/Claymore Laser View")]
     [RequireComponent(typeof(ClaymoreMine))]
     public class ClaymoreLaserView : MonoBehaviour
     {
-        [Header("Beam")]
-        [Tooltip("빔 색.")]
-        [SerializeField] private Color laserColor = new Color(1f, 0.05f, 0.03f, 1f);
-
-        [Tooltip("양 끝 빔 2줄의 밝기. 색에 곱하는 값이라 0이면 안 보이고 클수록 밝다. 플레이 중에 바꿔도 바로 반영된다.")]
-        [FormerlySerializedAs("laserIntensity")]
-        [SerializeField, Range(0f, 5f)] private float laserBrightness = 1f;
-
-        [Tooltip("양 끝 사이를 채우는 빔 29줄의 밝기. 아주 은은하게 — 0이면 양 끝만 보인다. 플레이 중에 바꿔도 바로 반영된다.")]
-        [SerializeField, Range(0f, 1f)] private float fillBrightness = 0.25f;   // 0.08은 밝은 바닥에서 아예 안 보였다
-
-        [Tooltip("빔 두께(m). 기획: 아주 얇게. 3mm는 화면 픽셀보다 얇아져서 멀리서 점선처럼 끊겨 보였다 → 6mm.")]
-        [SerializeField, Min(0.0005f)] private float beamWidth = 0.006f;
-
-        [Tooltip("빔이 닿은 곳에 찍히는 점의 지름(m).")]
-        [SerializeField, Min(0f)] private float hitDotSize = 0.012f;
-
         [Header("LED")]
         [Tooltip("깜빡일 LED 렌더러. 센서 렌즈 옆에 붙은 작은 구.")]
         [SerializeField] private Renderer ledRenderer;
@@ -47,27 +28,38 @@ namespace KillOrDead.Traps
         [Tooltip("한 번 켜졌다 꺼지는 데 걸리는 시간(초). 기획: 천천히 깜빡임.")]
         [SerializeField, Min(0.05f)] private float ledBlinkPeriod = 1.5f;
 
-        [Header("Sound")]
-        [Tooltip("작동 중 반복 재생되는 작은 전자음. 비워두면 무음.")]
-        [SerializeField] private AudioClip humSound;
+        [Header("Buzzer")]
+        [Tooltip("플레이어가 범위 안에 있는 동안 반복 재생되는 부저음. 비워두면 무음.")]
+        [SerializeField] private AudioClip buzzerSound;
 
-        [SerializeField, Range(0f, 1f)] private float humVolume = 0.25f;
+        [SerializeField, Range(0f, 1f)] private float buzzerVolume = 0.5f;
 
-        [Tooltip("이 거리 밖에서는 안 들린다(m). 기획: 가까이 가야 들리게.")]
-        [SerializeField, Min(0.1f)] private float humMaxDistance = 4f;
+        [Tooltip("플레이어가 크레모어로부터 이 거리(m) 안에 들어오면 부저음이 울린다. 멀어질수록 작게 들린다.")]
+        [SerializeField, Min(0.1f)] private float buzzerRange = 6f;
+
+        [Header("Sensor Break (센서 피격)")]
+        [Tooltip("센서가 총에 맞아 부서지는 순간 센서 렌즈 위치에 생성할 전기 스파크 이펙트. 비워두면 안 나온다.")]
+        [SerializeField] private GameObject sensorBreakEffect;
+
+        [Tooltip("센서가 부서지는 순간 재생할 소리. 비워두면 무음.")]
+        [SerializeField] private AudioClip sensorBreakSound;
+
+        [SerializeField, Range(0f, 1f)] private float sensorBreakVolume = 1f;
+
+        [Header("Inspect (확대 화면)")]
+        [Tooltip("선이 잘렸을 때(해체) 확대해서 보여줄 지점. 이 오브젝트의 앞(+Z)이 확대 카메라가 바라보는 방향이다.")]
+        [SerializeField] private Transform cableInspectFocus;
+
+        [Tooltip("센서가 부서졌을 때 확대해서 보여줄 지점. 이 오브젝트의 앞(+Z)이 확대 카메라가 바라보는 방향이다.")]
+        [SerializeField] private Transform sensorInspectFocus;
 
         private ClaymoreMine _mine;
-        private LineRenderer[] _beams;   // 감지 레이와 같은 순서. [0] = 왼쪽 끝, [마지막] = 오른쪽 끝
-        private Transform[] _dots;       // 끝점 빨간 점은 양 끝 빔에만 (사이 빔까지 찍으면 다시 지저분해진다)
-        private GameObject _beamRoot;
-        private AudioSource _hum;
+        private ClaymoreInspectUI _inspectUI;
+        private bool _wasDisarmed;
+        private AudioSource _buzzer;
         private Material _ledOnMaterial;
         private Material _ledOffMaterial;
-        private Material _beamMaterial;
-        private Material _dotMaterial;
-        private Material _fillMaterial;
-        private float _appliedBrightness = -1f;
-        private float _appliedFillBrightness = -1f;
+        private bool _sensorWasActive;
 
         private void Awake()
         {
@@ -76,88 +68,10 @@ namespace KillOrDead.Traps
 
         private void Start()
         {
-            BuildBeams();
             SetupLed();
-            SetupHum();
-        }
-
-        private void BuildBeams()
-        {
-            // 양 끝 빔·점·사이 빔이 각각 머티리얼 하나씩을 같이 쓴다.
-            // 가산 합성(뒤 배경에 색을 더함)이라 빛나는 선처럼 보이고, 색이 어두울수록 더 은은해진다.
-            // 색(밝기)은 ApplyBrightness에서 넣는다.
-            _beamMaterial = RuntimeUnlitMaterial.CreateAdditive(laserColor);
-            _dotMaterial = RuntimeUnlitMaterial.CreateAdditive(laserColor);
-            _fillMaterial = RuntimeUnlitMaterial.CreateAdditive(laserColor);
-
-            _beamRoot = new GameObject("LaserBeams");
-            _beamRoot.transform.SetParent(transform, false);
-
-            int count = _mine.BeamCount;
-            _beams = new LineRenderer[count];
-            _dots = new Transform[2];
-
-            for (int i = 0; i < count; i++)
-            {
-                bool isEdge = IsEdge(i);
-                var beam = new GameObject(isEdge ? (i == 0 ? "Beam_Left" : "Beam_Right") : $"Beam_Fill_{i:00}")
-                    .AddComponent<LineRenderer>();
-                beam.transform.SetParent(_beamRoot.transform, false);
-                beam.useWorldSpace = true;
-                beam.positionCount = 2;
-                beam.startWidth = beamWidth;
-                beam.endWidth = beamWidth;
-                beam.sharedMaterial = isEdge ? _beamMaterial : _fillMaterial;
-                beam.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                beam.receiveShadows = false;
-                beam.numCapVertices = 0;
-                _beams[i] = beam;
-            }
-
-            for (int d = 0; d < 2; d++)
-            {
-                var dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                dot.name = d == 0 ? "HitDot_Left" : "HitDot_Right";
-                Destroy(dot.GetComponent<Collider>());   // 점이 빔을 막으면 안 된다
-                dot.transform.SetParent(_beamRoot.transform, false);
-                dot.transform.localScale = Vector3.one * hitDotSize;
-                var dotRenderer = dot.GetComponent<MeshRenderer>();
-                dotRenderer.sharedMaterial = _dotMaterial;
-                dotRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                dotRenderer.receiveShadows = false;
-                _dots[d] = dot.transform;
-            }
-
-            ApplyBrightness();
-        }
-
-        private bool IsEdge(int i) => i == 0 || i == _mine.BeamCount - 1;
-
-        /// <summary>밝기 값을 머티리얼 색에 반영한다. 값이 바뀌었을 때만 실제로 쓴다.</summary>
-        private void ApplyBrightness()
-        {
-            if (!Mathf.Approximately(_appliedBrightness, laserBrightness))
-            {
-                SetColor(_beamMaterial, laserBrightness);
-                SetColor(_dotMaterial, laserBrightness);
-                _appliedBrightness = laserBrightness;
-            }
-
-            if (!Mathf.Approximately(_appliedFillBrightness, fillBrightness))
-            {
-                SetColor(_fillMaterial, fillBrightness);
-                _appliedFillBrightness = fillBrightness;
-            }
-        }
-
-        private void SetColor(Material material, float brightness)
-        {
-            if (material == null) return;
-
-            Color color = laserColor * brightness;
-            color.a = 1f;
-            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
-            if (material.HasProperty("_Color")) material.SetColor("_Color", color);
+            SetupBuzzer();
+            _sensorWasActive = _mine.IsSensorActive;
+            _wasDisarmed = _mine.IsDisarmed;
         }
 
         private void SetupLed()
@@ -170,66 +84,105 @@ namespace KillOrDead.Traps
             ledRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
         }
 
-        private void SetupHum()
+        private void SetupBuzzer()
         {
-            if (humSound == null) return;
+            if (buzzerSound == null) return;
 
-            _hum = gameObject.AddComponent<AudioSource>();
-            _hum.clip = humSound;
-            _hum.loop = true;
-            _hum.volume = humVolume;
-            _hum.spatialBlend = 1f;                                   // 완전 3D 소리
-            _hum.rolloffMode = AudioRolloffMode.Linear;
-            _hum.minDistance = 0.5f;
-            _hum.maxDistance = humMaxDistance;
-            _hum.Play();
+            _buzzer = gameObject.AddComponent<AudioSource>();
+            _buzzer.clip = buzzerSound;
+            _buzzer.loop = true;
+            _buzzer.playOnAwake = false;
+            _buzzer.volume = buzzerVolume;
+            _buzzer.spatialBlend = 1f;                                // 완전 3D 소리 — 소리 나는 방향을 알 수 있다
+            _buzzer.rolloffMode = AudioRolloffMode.Linear;
+            _buzzer.minDistance = 0.5f;
+            _buzzer.maxDistance = buzzerRange;                        // 범위 끝에서 0, 가까울수록 크게
         }
 
-        // 판정(FixedUpdate)이 끝난 뒤, 화면에 그리기 직전에 빔을 맞춘다.
         private void LateUpdate()
         {
-            if (_beams == null) return;
+            // 센서가 부서지거나 해체되면 LED·부저음이 꺼진다 (기획: 센서 피격 → 무력화).
+            bool active = _mine.IsArmed;
 
-            // 센서가 부서지면 레이저가 꺼진다 (기획: 센서 피격 → 무력화, 레이저 OFF).
-            // LED는 센서 모델(Sensor_Intact) 밑에 붙어 있어서 센서가 꺼질 때 같이 사라진다.
-            bool active = _mine.IsSensorActive;
-            if (_beamRoot.activeSelf != active) _beamRoot.SetActive(active);
-            if (_hum != null && _hum.isPlaying != active)
-            {
-                if (active) _hum.Play();
-                else _hum.Stop();
-            }
-            if (!active) return;
-
-            ApplyBrightness();
-
-            Vector3 origin = _mine.LaserOrigin.position;
-
-            for (int i = 0; i < _beams.Length; i++)
-            {
-                _beams[i].SetPosition(0, origin);
-                _beams[i].SetPosition(1, _mine.GetBeamEnd(i));
-            }
-
-            // 끝점 빨간 점은 양 끝 빔에만.
-            UpdateDot(_dots[0], 0);
-            UpdateDot(_dots[1], _beams.Length - 1);
-
-            UpdateLed();
+            UpdateBuzzer(active);
+            UpdateLed(active);
+            CheckSensorBreak();
+            CheckDisarm();
         }
 
-        private void UpdateDot(Transform dot, int beamIndex)
+        /// <summary>해체되지 않았다가 이번에 해체됐으면(선이 잘렸으면) 잘린 선을 확대 화면으로 보여준다.</summary>
+        private void CheckDisarm()
         {
-            bool show = _mine.BeamHitSomething(beamIndex);
-            if (dot.gameObject.activeSelf != show) dot.gameObject.SetActive(show);
-            if (show) dot.position = _mine.GetBeamEnd(beamIndex);
+            bool disarmed = _mine.IsDisarmed;
+            if (!_wasDisarmed && disarmed) ShowInspect(cableInspectFocus);
+            _wasDisarmed = disarmed;
         }
 
-        private void UpdateLed()
+        // 화면 오른쪽 위 확대 칸에 부위를 띄운다. UI는 씬 Canvas에 하나 있고, 처음 쓸 때 찾아 둔다.
+        private void ShowInspect(Transform focus)
+        {
+            if (focus == null) return;
+
+            if (_inspectUI == null)
+                _inspectUI = FindFirstObjectByType<ClaymoreInspectUI>(FindObjectsInactive.Include);
+
+            if (_inspectUI != null) _inspectUI.Show(focus);
+        }
+
+        /// <summary>
+        /// 센서가 살아 있다가 이번에 부서졌으면 스파크와 소리를 한 번 내고, 부서진 센서를 확대 화면으로 보여준다.
+        /// 센서 파괴는 총(HitscanTacticalWeapon)이 ClaymoreParts.DestroySensor()를 불러서 일어나는데,
+        /// 여기서는 그 결과(살아 있음 → 부서짐)만 보고 반응한다. 이미 부서진 센서를 또 맞혀도 다시 나오지 않는다.
+        /// </summary>
+        private void CheckSensorBreak()
+        {
+            bool sensorActive = _mine.IsSensorActive;
+            if (_sensorWasActive && !sensorActive) PlaySensorBreak();
+            _sensorWasActive = sensorActive;
+        }
+
+        private void PlaySensorBreak()
+        {
+            Vector3 position = _mine.LaserOrigin.position;   // 센서 렌즈 중심
+
+            if (sensorBreakEffect != null)
+            {
+                // 이펙트는 다 튀고 나면 스스로 사라진다(파티클 Stop Action = Destroy).
+                Instantiate(sensorBreakEffect, position, Quaternion.LookRotation(_mine.transform.forward));
+            }
+
+            if (sensorBreakSound != null)
+            {
+                AudioSource.PlayClipAtPoint(sensorBreakSound, position, sensorBreakVolume);
+            }
+
+            ShowInspect(sensorInspectFocus);
+        }
+
+        private void UpdateBuzzer(bool active)
+        {
+            if (_buzzer == null) return;
+
+            bool play = active && IsPlayerInBuzzerRange();
+            if (_buzzer.isPlaying == play) return;
+
+            if (play) _buzzer.Play();
+            else _buzzer.Stop();
+        }
+
+        private bool IsPlayerInBuzzerRange()
+        {
+            Transform player = _mine.Player;
+            if (player == null) return false;
+            return (player.position - transform.position).sqrMagnitude <= buzzerRange * buzzerRange;
+        }
+
+        private void UpdateLed(bool active)
         {
             if (ledRenderer == null) return;
 
-            bool on = Mathf.Repeat(Time.time, ledBlinkPeriod) < ledBlinkPeriod * 0.5f;
+            // 꺼진 크레모어는 LED도 꺼진 색으로 둔다. 해체는 센서 모델이 남아 있으니 따로 꺼야 한다.
+            bool on = active && Mathf.Repeat(Time.time, ledBlinkPeriod) < ledBlinkPeriod * 0.5f;
             var target = on ? _ledOnMaterial : _ledOffMaterial;
             if (ledRenderer.sharedMaterial != target) ledRenderer.sharedMaterial = target;
         }
@@ -239,9 +192,6 @@ namespace KillOrDead.Traps
             // 코드로 만든 머티리얼은 직접 치워야 메모리에 남지 않는다.
             if (_ledOnMaterial != null) Destroy(_ledOnMaterial);
             if (_ledOffMaterial != null) Destroy(_ledOffMaterial);
-            if (_beamMaterial != null) Destroy(_beamMaterial);
-            if (_dotMaterial != null) Destroy(_dotMaterial);
-            if (_fillMaterial != null) Destroy(_fillMaterial);
         }
     }
 }

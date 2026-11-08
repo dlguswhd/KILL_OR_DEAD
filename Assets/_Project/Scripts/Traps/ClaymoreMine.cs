@@ -11,14 +11,14 @@ namespace KillOrDead.Traps
     ///
     /// 동작 순서
     /// 1. 센서 렌즈(<see cref="laserOrigin"/>)에서 수평 부채꼴로 레이저 빔 31개를 쏜다 (60°, 5m).
-    /// 2. 빔 하나 = 감지 레이 하나다. 화면에 보이는 빔과 판정이 항상 같다.
+    /// 2. 빔은 화면에 그리지 않는다(보이지 않는 감지 레이). 대신 가까이 가면 부저음이 울린다.
     ///    벽·엄폐물에 닿으면 빔은 거기서 끊기고, 그 뒤는 감지하지 않는다.
     /// 3. 빔에 플레이어가 걸리면 지연 없이 즉시 기폭한다.
     /// 4. 폭발 피해는 범위형이다 — 전방 60° 부채꼴(파편, 100m) + 원형 후폭풍(16m).
     ///    폭발 지점과 대상 사이가 벽으로 막혀 있으면 피해가 없다.
     /// 5. 본체는 폭발과 동시에 사라진다.
     ///
-    /// 빔을 그리는 일은 <see cref="ClaymoreLaserView"/>가 맡는다. 이 클래스는 판정만 한다.
+    /// LED·부저음은 <see cref="ClaymoreLaserView"/>가 맡는다. 이 클래스는 판정만 한다.
     /// </summary>
     [AddComponentMenu("KILL OR DEAD/Traps/Claymore Mine")]
     public class ClaymoreMine : MonoBehaviour
@@ -30,7 +30,7 @@ namespace KillOrDead.Traps
         [Tooltip("감지 반경(m). 기획 확정 5m.")]
         [SerializeField, Min(0.1f)] private float detectionRadius = 5f;
 
-        [Tooltip("감지 각도(도). 정면 기준 좌우 절반씩. 기획 확정 60°. 보이는 양 끝 레이저도 이 각도를 따라간다(줄이면 같이 좁아짐).")]
+        [Tooltip("감지 각도(도). 정면 기준 좌우 절반씩. 기획 확정 60°.")]
         [SerializeField, Range(1f, 180f)] private float detectionAngle = 60f;
 
         [Tooltip("레이저 빔 개수. 기획 초안 31개(2° 간격). 5m 끝에서도 빔 사이가 약 17cm라 사람이 빠져나갈 수 없다.")]
@@ -41,6 +41,13 @@ namespace KillOrDead.Traps
 
         [Tooltip("플레이어가 이 거리 안에 있을 때만 감지 판정을 돌린다(최적화). 감지 반경보다 넉넉히 크게.")]
         [SerializeField, Min(0f)] private float activationDistance = 10f;
+
+        [Header("Disarm (해체)")]
+        [Tooltip("해체용 상호작용 포인트(자식 DisarmPoint). 홀드 동작에 이 컴포넌트의 Disarm()을 연결한다. 해체 시간은 이 포인트의 '홀드 시간'에서 조절한다.")]
+        [SerializeField] private InteractionPointController disarmPoint;
+
+        [Tooltip("해체되거나 센서가 파괴된 뒤, 이 시간(초)이 지나면 크레모어가 맵에서 사라진다.")]
+        [SerializeField, Min(0f)] private float removeDelayAfterDisabled = 5f;
 
         [Header("Explosion — 범위 (기획 초안, 실제 M18A1 수치)")]
         [Tooltip("전방 파편 부채꼴의 길이(m). 각도는 감지 각도와 같다.")]
@@ -83,20 +90,16 @@ namespace KillOrDead.Traps
         private const float LethalDamage = float.MaxValue;
 
         private Vector3[] _beamEnds;
-        private bool[] _beamHitSomething;
         private Transform _player;
         private CharacterController _playerController;
         private ClaymoreParts _parts;
         private bool _exploded;
+        private bool _removeScheduled;
 
         public Transform LaserOrigin => laserOrigin != null ? laserOrigin : transform;
-        public int BeamCount => beamCount;
 
-        /// <summary>빔 i의 끝점(월드 좌표). 장애물에 막히면 그 지점, 아니면 감지 반경 끝.</summary>
-        public Vector3 GetBeamEnd(int i) => _beamEnds[i];
-
-        /// <summary>빔 i가 무언가(벽·바닥·몸)에 닿아서 끊겼는지. 끝점에 빨간 점을 찍을지 정할 때 쓴다.</summary>
-        public bool BeamHitSomething(int i) => _beamHitSomething[i];
+        /// <summary>씬의 플레이어. 못 찾았으면 null. 부저음 범위 계산에 쓴다.</summary>
+        public Transform Player => _player;
 
         /// <summary>
         /// 센서가 살아 있는지. 센서가 총에 맞아 부서지면(<see cref="ClaymoreParts.DestroySensor"/>) false가 되고,
@@ -104,10 +107,15 @@ namespace KillOrDead.Traps
         /// </summary>
         public bool IsSensorActive => _parts == null || !_parts.IsSensorDestroyed;
 
+        /// <summary>해체됐는지. 해체되면 센서가 멀쩡해도 감지·기폭·레이저가 모두 꺼진다.</summary>
+        public bool IsDisarmed => _parts != null && _parts.IsDisarmed;
+
+        /// <summary>지금 작동 중인지(감지·기폭 가능). 센서가 살아 있고 해체되지 않았을 때만 true.</summary>
+        public bool IsArmed => IsSensorActive && !IsDisarmed;
+
         private void Awake()
         {
             _beamEnds = new Vector3[beamCount];
-            _beamHitSomething = new bool[beamCount];
             _parts = GetComponent<ClaymoreParts>();
         }
 
@@ -119,47 +127,62 @@ namespace KillOrDead.Traps
                 _player = locomotion.transform;
                 _playerController = locomotion.GetComponent<CharacterController>();
             }
-
-            // 플레이어가 멀리 있어서 판정을 건너뛰더라도, 처음 한 번은 빔 끝점을 계산해 둬야 빔이 제대로 그려진다.
-            ScanBeams();
         }
 
         private void FixedUpdate()
         {
             if (_exploded) return;
 
-            // 센서가 부서지면 무력화 — 감지하지 않는다 (기획: 센서 피격 → 레이저 OFF).
-            if (!IsSensorActive) return;
+            // 센서가 부서지거나 해체되면 무력화 — 감지하지 않는다 (기획: 센서 피격 → 레이저 OFF).
+            if (!IsArmed) return;
 
-            if (IsPlayerNearby())
-            {
-                ScanBeams();
-            }
-            else
-            {
-                // 플레이어가 멀리 있으면 기폭 판정은 하지 않고, 그려지는 빔의 끝점만 갱신한다.
-                // 그래야 감지 각도를 바꾸거나 문이 열려도 보이는 빔이 바로 따라온다.
-                for (int i = 0; i < beamCount; i++) RefreshBeamEnd(i);
-            }
+            // 플레이어가 멀리 있으면 판정을 건너뛴다(최적화).
+            if (IsPlayerNearby()) ScanBeams();
         }
 
-        /// <summary>빔 i 하나의 끝점만 다시 구한다(감지·기폭은 하지 않음).</summary>
-        private void RefreshBeamEnd(int i)
+        private void Update()
         {
-            Vector3 origin = LaserOrigin.position;
-            Vector3 direction = GetBeamDirection(i);
+            ScheduleRemoveIfDisabled();
+            UpdateDisarmPoint();
+        }
 
-            if (Physics.Raycast(origin, direction, out RaycastHit hit, detectionRadius,
-                    detectionMask, QueryTriggerInteraction.Ignore))
-            {
-                _beamEnds[i] = hit.point;
-                _beamHitSomething[i] = true;
-            }
-            else
-            {
-                _beamEnds[i] = origin + direction * detectionRadius;
-                _beamHitSomething[i] = false;
-            }
+        /// <summary>
+        /// 해체되거나 센서가 파괴되면(작동 중이 아니게 되면) 일정 시간 뒤 크레모어를 없앤다. 한 번만 예약한다.
+        /// 해체·센서 파괴 어느 쪽으로 꺼졌든 여기서 한 곳에서 처리한다.
+        /// </summary>
+        private void ScheduleRemoveIfDisabled()
+        {
+            if (_removeScheduled || _exploded || IsArmed) return;
+
+            _removeScheduled = true;
+            Destroy(gameObject, removeDelayAfterDisabled);
+        }
+
+        /// <summary>
+        /// 해체 포인트는 플레이어가 크레모어 뒤쪽(정면 반대편)에 있을 때만 켠다.
+        /// 꺼져 있으면 상호작용 감지에 잡히지 않아서, 앞이나 옆에서는 F키 안내가 뜨지 않는다.
+        /// </summary>
+        private void UpdateDisarmPoint()
+        {
+            if (disarmPoint == null || IsDisarmed) return;
+
+            bool behind = _player != null
+                          && Vector3.Dot(_player.position - transform.position, FlatForward()) < 0f;
+            if (disarmPoint.gameObject.activeSelf != behind) disarmPoint.gameObject.SetActive(behind);
+        }
+
+        /// <summary>
+        /// 해체. 해체 포인트의 홀드 동작에 연결된다(F키 홀드).
+        /// 선 모델이 끊어진 것으로 바뀌고, 이후로는 감지·기폭하지 않는다. 해체 포인트도 꺼서 다시 뜨지 않게 한다.
+        /// </summary>
+        public void Disarm()
+        {
+            if (_exploded || IsDisarmed) return;
+
+            if (_parts != null) _parts.Disarm();
+            if (disarmPoint != null) disarmPoint.gameObject.SetActive(false);
+
+            Debug.Log($"[ClaymoreMine] '{name}' 해체됨");
         }
 
         private bool IsPlayerNearby()
@@ -185,7 +208,6 @@ namespace KillOrDead.Traps
                         detectionMask, QueryTriggerInteraction.Ignore))
                 {
                     _beamEnds[i] = hit.point;
-                    _beamHitSomething[i] = true;
 
                     if (!_exploded && IsDetectionTarget(hit.collider))
                     {
@@ -196,7 +218,6 @@ namespace KillOrDead.Traps
                 else
                 {
                     _beamEnds[i] = origin + direction * detectionRadius;
-                    _beamHitSomething[i] = false;
                 }
 
                 // 벽에 막히기 전 구간에 플레이어 몸(원기둥)이 걸쳐 있으면 기폭.
@@ -204,7 +225,6 @@ namespace KillOrDead.Traps
                 if (!_exploded && BeamCrossesPlayerBody(origin, direction, beamLength, out float hitDistance))
                 {
                     _beamEnds[i] = origin + direction * hitDistance;
-                    _beamHitSomething[i] = true;
                     Detonate(_playerController);
                     return;
                 }

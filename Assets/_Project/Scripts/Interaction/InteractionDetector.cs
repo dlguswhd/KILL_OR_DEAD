@@ -164,6 +164,8 @@ public class InteractionDetector : MonoBehaviour
         if (logSelection)
             Debug.Log($"InteractionDetector: 대상 = {(point != null ? point.name : "없음")}", this);
 
+        ApplyHoldTime(point);
+
         if (_ui == null)
         {
             // UI는 표시를 끌 때 자기 루트를 꺼두므로 비활성 포함으로 찾는다.
@@ -179,6 +181,18 @@ public class InteractionDetector : MonoBehaviour
             // 대상이 막 잡힌 프레임에 UI가 이전 위치에 잠깐 보이는 것을 막는다.
             UpdateScreenPosition();
         }
+    }
+
+    // 대상 포인트에 홀드 시간이 따로 정해져 있으면 입력 판정에 적용하고, 없으면 기본값으로 되돌린다.
+    // 포인트의 홀드 시간은 누른 순간부터 재므로, 탭/홀드 경계 시간을 빼서 넘긴다.
+    private void ApplyHoldTime(InteractionPointController point)
+    {
+        if (_tapHold == null) return;
+
+        if (point != null && point.HoldTime > 0f)
+            _tapHold.HoldRequiredTime = point.HoldTime - _tapHold.TapHoldBoundaryTime;
+        else
+            _tapHold.ResetHoldRequiredTime();
     }
 
     // 탭/홀드 판정 결과를 UI로 전달한다. 실제 동작 실행은 UI가 담당한다.
